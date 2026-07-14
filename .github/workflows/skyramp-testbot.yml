@@ -37,7 +37,7 @@ jobs:
           persist-credentials: false
 
       - uses: skyramp/testbot@70034f7ff936e4e516064307679160cdc8da60eb # v0.11.0
-        with:'
+        with:
           skyrampMcpVersion: 0.3.1
           anthropicApiKey: ${{ secrets.SKYRAMP_TESTBOT_API_KEY }}
           githubToken: ${{ steps.skyramp-testbot-app-token.outputs.token }}
