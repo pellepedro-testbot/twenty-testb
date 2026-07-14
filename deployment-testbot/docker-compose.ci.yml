@@ -1,0 +1,18 @@
+# CI-ONLY overlay — enables GitHub Actions Buildx layer caching for the from-source build.
+#
+# Applied by setup.sh only when GITHUB_ACTIONS=true (with COMPOSE_BAKE=true). Requires a
+# docker-container buildx builder, created by docker/setup-buildx-action in the workflow,
+# plus the Actions cache backend (auto-available in GitHub Actions). NOT used locally, where
+# the `type=gha` backend has no tokens and would fail the build.
+#
+# Effect: the stable, expensive stages (base image, apk installs, `yarn workspaces focus`
+# dependency installs for server+front) are restored from cache across runs; only the
+# source-copy + `nx build` stages re-run when the PR actually changes code. The SUT is still
+# built FROM SOURCE, so feature-branch changes are always exercised.
+services:
+  twenty:
+    build:
+      cache_from:
+        - type=gha,scope=twenty-sut
+      cache_to:
+        - type=gha,mode=max,scope=twenty-sut
