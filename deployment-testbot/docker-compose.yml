@@ -1,0 +1,35 @@
+# deployment-testbot/docker-compose.yml — Twenty SUT, BUILT FROM SOURCE.
+#
+# Twenty facts (verified 2026-07-14 against the cloned twentyhq/twenty HEAD):
+#   Dockerfile:   packages/twenty-docker/twenty/Dockerfile
+#   Build target: twenty-app-dev  (all-in-one: Postgres + Redis + server + worker + frontend)
+#   Port:         2020
+#   Health:       GET /healthz
+#   Frontend:     built from source in the `twenty-front-build` stage (`nx build twenty-front`)
+#                 and copied into the server image — so UI PR changes ARE exercised.
+#   Seeded user:  tim@apple.dev  (SIGN_IN_PREFILLED prefills the login form on first boot)
+#   DB init/seed: handled inside the image by s6 (init-db.sh runs migrations + workspace:seed:dev)
+#
+# UPSTREAM_CHECKOUT: path to the cloned Twenty source tree (build context = repo root).
+#   Defaults to ../ (one level up from deployment-testbot/, i.e. the repo root).
+services:
+  twenty:
+    build:
+      context: ${UPSTREAM_CHECKOUT:-../}
+      dockerfile: packages/twenty-docker/twenty/Dockerfile
+      target: twenty-app-dev
+    container_name: twenty-testb
+    ports:
+      - "2020:2020"
+    environment:
+      SERVER_URL: http://localhost:2020
+      NODE_PORT: "2020"
+      SIGN_IN_PREFILLED: "true"
+      IS_BILLING_ENABLED: "false"
+      APP_SECRET: twenty-testb-secret-not-for-production
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:2020/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
